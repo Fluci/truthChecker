@@ -123,6 +123,8 @@ if __name__ == "__main__":
     print("Found " + str(len(dataPairs)) + " data pairs")
     bbColor = (255,0,0)
     bbWidth = 2
+    textColor = (200, 200, 200)
+    textSize = 0.8
     labelToData = labelsToData(dataPairs)
     for label in labelToData.keys():
         i = 0
@@ -131,13 +133,13 @@ if __name__ == "__main__":
             imgPath = e['img']
             print(imgPath)
             a = e['annotation']
-            pic = cv2.imread(imgPath,0)
+            pic = cv2.imread(imgPath,cv2.IMREAD_COLOR)
             bb = a.boundingBox;
             #sub = pic[bb.ymin:bb.ymax, bb.xmin:bb.xmax]
             cv2.rectangle(pic,(bb.xmin,bb.ymin),(bb.xmax,bb.ymax),bbColor,bbWidth)
             ident = label + ": ..." + str(imgPath[-50:])
-            height, width = pic.shape
-            cv2.putText(pic, ident, (0,20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.8, (200, 0, 0))
+            height, width, channels = pic.shape
+            cv2.putText(pic, ident, (0,20), cv2.FONT_HERSHEY_COMPLEX_SMALL, textSize, textColor)
             cv2.imshow("img", pic)
             key = cv2.waitKey(0)
             if key == 27:
