@@ -95,12 +95,12 @@ def labelsToData(dataPairs):
         labelToData[l] = []
     for i in range(0, len(dataPairs)):
         for a in annotations[i]:
-			data = {}
-			data['i'] = i
-			data['img'] = dataPairs[i]['img']
-			data['xml'] = dataPairs[i]['xml']
-			data['annotation'] = a
-			labelToData[a.name].append(data)
+            data = {}
+            data['i'] = i
+            data['img'] = dataPairs[i]['img']
+            data['xml'] = dataPairs[i]['xml']
+            data['annotation'] = a
+            labelToData[a.name].append(data)
     return labelToData
 
 
@@ -125,31 +125,31 @@ if __name__ == "__main__":
     bbWidth = 2
     labelToData = labelsToData(dataPairs)
     for label in labelToData.keys():
-		i = 0
-		while i < len(labelToData[label]):
-			e = labelToData[label][i]
-			imgPath = e['img']
-			print(imgPath)
-			a = e['annotation']
-			pic = cv2.imread(imgPath,0)
-			bb = a.boundingBox;
-			#sub = pic[bb.ymin:bb.ymax, bb.xmin:bb.xmax]
-			cv2.rectangle(pic,(bb.xmin,bb.ymin),(bb.xmax,bb.ymax),bbColor,bbWidth)
-			ident = label + ": ..." + str(imgPath[-50:])
-			height, width = pic.shape
-			cv2.putText(pic, ident, (0,20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.8, (200, 0, 0))
-			cv2.imshow("img", pic)
-			key = cv2.waitKey(0)
-			if key == 27:
-				break
-			elif key == 113:
-				exit()
-			elif key == 2: # back arrow
-				i = max(i - 1, 0)
-			elif key == 3: # forward arrow
-				i = i + 1
-			else:
-				i = i + 1
+        i = 0
+        while i < len(labelToData[label]):
+            e = labelToData[label][i]
+            imgPath = e['img']
+            print(imgPath)
+            a = e['annotation']
+            pic = cv2.imread(imgPath,0)
+            bb = a.boundingBox;
+            #sub = pic[bb.ymin:bb.ymax, bb.xmin:bb.xmax]
+            cv2.rectangle(pic,(bb.xmin,bb.ymin),(bb.xmax,bb.ymax),bbColor,bbWidth)
+            ident = label + ": ..." + str(imgPath[-50:])
+            height, width = pic.shape
+            cv2.putText(pic, ident, (0,20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.8, (200, 0, 0))
+            cv2.imshow("img", pic)
+            key = cv2.waitKey(0)
+            if key == 27:
+                break
+            elif key == 113:
+                exit()
+            elif key == 2: # back arrow
+                i = max(i - 1, 0)
+            elif key == 3: # forward arrow
+                i = i + 1
+            else:
+                i = i + 1
   
     
 
