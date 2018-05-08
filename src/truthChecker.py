@@ -111,7 +111,7 @@ if __name__ == "__main__":
     print("The First argument should be the path to your ground truth folder.")
     print("<-/->: Use forward/backward arrows to navigate.")
     print("Escape: Hit escape to skip walking through a label.")
-	print("Q: quit application immediately")
+    print("Q: quit application immediately")
     
     # where-ever your ground truth folder is
     folders = sys.argv[1:]
@@ -141,9 +141,9 @@ if __name__ == "__main__":
 			cv2.imshow("img", pic)
 			key = cv2.waitKey(0)
 			if key == 27:
-				break;
-			elif key == 4:
-				return
+				break
+			elif key == 113:
+				exit()
 			elif key == 2: # back arrow
 				i = max(i - 1, 0)
 			elif key == 3: # forward arrow
