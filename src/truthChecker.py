@@ -1,9 +1,29 @@
 import os
 
-def findDataPairs(folder, annotationSubFolder):
+def findMatchForImage(annotationsFolder, imgName):
+    """
+    Tries to find the matching annotation file.
+    Returns either the path to the annotation file or None
+    """
+    parts = imgName.rsplit('.', 1)
+    base = parts[0]
+    ext = parts[1]
+    if len(base) is 0:
+        # skip, hidden file
+        return None
+    xml = os.path.join(annotationsFolder, base + ".xml")
+    if not os.path.isfile(xml):
+       return None 
+    return xml
+
+def findDataPairs(folder, annotationFolder):
+    """
+    Searches an image directory "folder" and an annotation directory "annotationFolder".
+    It then looks for each image, if there is a matching annotation (according to name).
+    If there is, it creates a dictionary `{'img', 'xml'}` with the values set to the paths of the files
+    """
     dataPairs = []
     
-    annotationFolder = os.path.join(folder, annotationSubFolder)
     if not os.path.isdir(annotationFolder):
         print("No annotations folder found at " + annotationFolder)
         return dataPairs
@@ -12,21 +32,23 @@ def findDataPairs(folder, annotationSubFolder):
         imgPath = os.path.join(folder, img)
         if not os.path.isfile(imgPath):
             continue
-        parts = img.rsplit('.', 1)
-        base = parts[0]
-        ext = parts[1]
-        if len(base) is 0:
-            # skip, hidden file
+        xml = findMatchForImage(annotationFolder, img)
+        if xml == None:
+            print("No annotation xml found for file " + imgPath)
             continue
-        xml = os.path.join(annotationFolder, base + ".xml")
-        if not os.path.isfile(xml):
-            print("No annotation xml found: " + xml + " for file " + imgPath)
-            continue
+
         dataPairs.append({'img': imgPath, 'xml': xml})
     
     return dataPairs
 
 def searchFolders(folders, annotationSubFolder):
+    """
+    Like `findDataPairs`, it searches folders and their subfolders for matches 
+    between images and annotations. The difference is, it takes a list of absolute paths (`folders`),
+    and a relative directory path `annotationSubFolder` such that it looks for the annotations relative to the
+    main folders. 
+    It then returns a merged list of all found pairs.
+    """
     truthDirs = []
     
     for f in folders:
@@ -43,7 +65,8 @@ def searchFolders(folders, annotationSubFolder):
     dataPairs = []
     
     for t in truthDirs:
-        newPairs = findDataPairs(t, annotationSubFolder)
+        annotationFolder = os.path.join(t, annotationSubFolder)
+        newPairs = findDataPairs(t, annotationFolder)
         dataPairs = dataPairs + newPairs
     
     return dataPairs
