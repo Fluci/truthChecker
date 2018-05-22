@@ -1,4 +1,5 @@
 import os
+import numpy as np
 
 def findMatchForImage(annotationsFolder, imgName):
     """
@@ -77,24 +78,62 @@ class BoundingBox:
         self.ymin = ymin
         self.xmax = xmax
         self.ymax = ymax
-    def drawTo(self, pic, lineColor, lineWidth):
+    def drawTo(self, pic, lineColor, lineWidth, centerRadius=2):
         minS = (int(self.xmin), int(self.ymin))
         maxS = (int(self.xmax), int(self.ymax))
-        cv2.rectangle(pic,maxS,minS,bbColor,bbWidth)
+        cv2.rectangle(pic,maxS,minS, lineColor, lineWidth)
+        C = self.centroid()
+        C = (int(C[0]), int(C[1]))
+        cv2.circle(pic, C, centerRadius, lineColor, lineWidth)
+    def centroid(self):
+        """ The arithmetic mean position of all points in the shape """
+        return ((self.xmax + self.xmin)/2.0, (self.ymax + self.ymin)/2.0)
 
 class Polygon:
     def __init__(self, xlist, ylist):
-        self.xs = xlist
-        self.ys = ylist
+        n = len(xlist)
+        # just to make math simple down the road, add the first point as last
+        xlist.append(xlist[0])
+        ylist.append(ylist[0])
+        self.xs = np.array(xlist)
+        self.ys = np.array(ylist)
         assert(len(xlist) == len(ylist))
-    def drawTo(self, pic, lineColor, lineWidth):
-        n = len(self.xs)
+    def drawTo(self, pic, lineColor, lineWidth, centerRadius=2):
+        n = len(self.xs)-1
         for i in range(n):
             xstart = int(self.xs[i])
             ystart = int(self.ys[i])
-            xend = int(self.xs[(i+1)%n])
-            yend = int(self.ys[(i+1)%n])
+            xend = int(self.xs[i+1])
+            yend = int(self.ys[i+1])
             cv2.line(pic, (xstart, ystart), (xend, yend), lineColor, lineWidth)
+        C = self.centroid()
+        C = (int(C[0]), int(C[1]))
+        print(C)
+        cv2.circle(pic, C, centerRadius, lineColor, lineWidth)
+    
+    def centroid(self):
+        """ The arithmetic mean position of all points in the shape """
+        # https://en.wikipedia.org/wiki/Centroid#Centroid_of_a_polygon 
+        n = len(self.xs) - 1
+        xs = self.xs
+        ys = self.ys
+        # A = 1/2 sum_{i = 0...n-1} ( x_i y_{i+1} - x_{i+1} y_i)
+        # COMMON_i = (x_i * y_{i+1} - x_{i+1} y_i)
+        L = np.multiply(xs[:-1],ys[1:])
+        R = np.multiply(xs[1:], ys[:-1])
+        COMMON = L - R 
+        # A = 1/2 sum_{i = 0...n-1] COMMON_i
+        A = 1.0/2.0 * np.sum(COMMON)
+        # Cx = 1 / (6A) * sum_{i = 0...n-1} (x_i + x_{i+1})(x_i * y_{i+1} - x_{i+1} y_i)
+        # Cy = 1 / (6A) * sum_{i = 0...n-1} (y_i + y_{i+1})(x_i * y_{i+1} - x_{i+1} y_i)
+        # Cx = 1 / (6A) * sum_{i = 0...n-1} (x_i + x_{i+1}) * COMMON_i
+        Cx = 1.0 / (6.0*A) * np.dot(xs[:-1] + xs[1:], COMMON)
+        # Cy = 1 / (6A) * sum_{i = 0...n-1} (y_i + y_{i+1}) * COMMON_i
+        Cy = 1.0 / (6.0*A) * np.dot(ys[:-1] + ys[1:], COMMON)
+        # naive approach:
+        # CCx = np.sum(xs[:-1])/n
+        # CCy = np.sum(ys[:-1])/n
+        return (Cx, Cy)
 
 class Annotation:
     def __init__(self, name, boundingShape):
@@ -103,6 +142,8 @@ class Annotation:
 
 import xml.etree.ElementTree as ET
 def readAnnotations(xml):
+    if xml is None:
+        return None
     xml = os.path.abspath(xml)
     if not os.path.isfile(xml):
         print("given annotation path is not a file: " + xml)
@@ -197,9 +238,9 @@ if __name__ == "__main__":
                 break
             elif key == 113:
                 exit()
-            elif key == 2: # back arrow
+            elif key == 2 or key == 65361: # back arrow
                 i = max(i - 1, 0)
-            elif key == 3: # forward arrow
+            elif key == 3 or key == 65363: # forward arrow
                 i = i + 1
             else:
                 i = i + 1
