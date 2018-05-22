@@ -54,11 +54,29 @@ class BoundingBox:
         self.ymin = ymin
         self.xmax = xmax
         self.ymax = ymax
+    def drawTo(self, pic, lineColor, lineWidth):
+        minS = (int(self.xmin), int(self.ymin))
+        maxS = (int(self.xmax), int(self.ymax))
+        cv2.rectangle(pic,maxS,minS,bbColor,bbWidth)
+
+class Polygon:
+    def __init__(self, xlist, ylist):
+        self.xs = xlist
+        self.ys = ylist
+        assert(len(xlist) == len(ylist))
+    def drawTo(self, pic, lineColor, lineWidth):
+        n = len(self.xs)
+        for i in range(n):
+            xstart = int(self.xs[i])
+            ystart = int(self.ys[i])
+            xend = int(self.xs[(i+1)%n])
+            yend = int(self.ys[(i+1)%n])
+            cv2.line(pic, (xstart, ystart), (xend, yend), lineColor, lineWidth)
 
 class Annotation:
-    def __init__(self, name, xmin, ymin, xmax, ymax):
+    def __init__(self, name, boundingShape):
         self.name = name
-        self.boundingBox = BoundingBox(xmin, ymin, xmax, ymax)
+        self.shape = boundingShape
 
 import xml.etree.ElementTree as ET
 def readAnnotations(xml):
@@ -71,11 +89,23 @@ def readAnnotations(xml):
     annotations = []
     for obj in root.iter('object'):
         bb = obj.find('bndbox')
-        xmin = bb.find('xmin').text
-        ymin = bb.find('ymin').text
-        xmax = bb.find('xmax').text
-        ymax = bb.find('ymax').text
-        ann = Annotation(obj.find('name').text, int(xmin), int(ymin), int(xmax), int(ymax))
+        polygon = obj.find('polygon')
+        if bb is not None:
+            xmin = bb.find('xmin').text
+            ymin = bb.find('ymin').text
+            xmax = bb.find('xmax').text
+            ymax = bb.find('ymax').text
+            boundingShape = BoundingBox(float(xmin), float(ymin), float(xmax), float(ymax))
+        elif polygon is not None:
+            xlist = []
+            ylist = []
+            for coord in polygon:
+                if coord.tag[0] is "x":
+                    xlist.append(float(coord.text))
+                elif coord.tag[0] is "y":
+                    ylist.append(float(coord.text))
+            boundingShape = Polygon(xlist, ylist) 
+        ann = Annotation(obj.find('name').text, boundingShape)
         annotations.append(ann)
     return annotations
     def __str__(self):
@@ -134,9 +164,7 @@ if __name__ == "__main__":
             print(imgPath)
             a = e['annotation']
             pic = cv2.imread(imgPath,cv2.IMREAD_COLOR)
-            bb = a.boundingBox;
-            #sub = pic[bb.ymin:bb.ymax, bb.xmin:bb.xmax]
-            cv2.rectangle(pic,(bb.xmin,bb.ymin),(bb.xmax,bb.ymax),bbColor,bbWidth)
+            a.shape.drawTo(pic, bbColor, bbWidth);
             ident = label + ": ..." + str(imgPath[-50:])
             height, width, channels = pic.shape
             cv2.putText(pic, ident, (0,20), cv2.FONT_HERSHEY_COMPLEX_SMALL, textSize, textColor)
