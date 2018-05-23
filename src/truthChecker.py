@@ -108,9 +108,7 @@ class Polygon:
             cv2.line(pic, (xstart, ystart), (xend, yend), lineColor, lineWidth)
         C = self.centroid()
         C = (int(C[0]), int(C[1]))
-        print(C)
         cv2.circle(pic, C, centerRadius, lineColor, lineWidth)
-    
     def centroid(self):
         """ The arithmetic mean position of all points in the shape """
         # https://en.wikipedia.org/wiki/Centroid#Centroid_of_a_polygon 
